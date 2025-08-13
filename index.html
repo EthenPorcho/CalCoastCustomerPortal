@@ -5,50 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cal Coast Refrigeration — Customer Portal</title>
   <meta name="theme-color" content="#0ea5e9" />
+  <!-- Favicon (inline SVG) -->
+  <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Cdefs%3E%3ClinearGradient id="g" x1="0" x2="1" y1="0" y2="1"%3E%3Cstop stop-color="%230ea5e9"/%3E%3Cstop stop-color="%230369a1" offset="1"/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect rx="14" ry="14" width="64" height="64" fill="url(%23g)"/%3E%3Cpath d="M20 38c0-6 4-10 12-10s12 4 12 10" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"/%3E%3Ccircle cx="26" cy="28" r="3" fill="white"/%3E%3Ccircle cx="38" cy="28" r="3" fill="white"/%3E%3C/svg%3E' />
   <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MSAL FIRST so sign-in works -->
+  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js" crossorigin="anonymous"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              200: '#bae6fd',
-              300: '#7dd3fc',
-              400: '#38bdf8',
-              500: '#0ea5e9', // light logo blue
-              600: '#0284c7',
-              700: '#0369a1', // deep logo blue
-              800: '#075985',
-              900: '#0c4a6e'
-            }
-          }
+            brand: { 50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',300:'#7dd3fc',400:'#38bdf8',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',800:'#075985',900:'#0c4a6e' }
+          },
+          keyframes: {
+            fadeUp: { '0%': {opacity:0, transform:'translateY(12px)'}, '100%': {opacity:1, transform:'translateY(0)'} },
+            fade: { '0%': {opacity:0}, '100%': {opacity:1} }
+          },
+          animation: { fadeUp: 'fadeUp .5s ease-out both', fade: 'fade .4s ease-out both' }
         }
       }
     }
   </script>
   <style>
-    /* Subtle background pattern + gradient */
-    body::before {
-      content: "";
-      position: fixed; inset: 0; z-index: -1;
-      background: radial-gradient(1200px 600px at 10% 0%, rgba(14,165,233,.15), transparent 60%),
-                  radial-gradient(1200px 600px at 90% 20%, rgba(3,105,161,.20), transparent 60%),
-                  linear-gradient(180deg, #f8fafc, #eef6fb 30%, #e6f3fb 100%);
-    }
+    /* Rule-of-thirds background blocks */
+    body { position: relative; }
+    .bg-thirds { position: fixed; inset: 0; z-index: -2; display: grid; grid-template-rows: 33% 34% 33%; }
+    .bg-top { background: linear-gradient(180deg, #e6f3fb, #f6fbff); }
+    .bg-mid { background: white; }
+    .bg-bot { background: linear-gradient(180deg, #ffffff, #eef6fb); }
+    .bg-stripe { position: fixed; inset: 0; z-index: -1; pointer-events:none; }
+    .bg-stripe::before { content:''; position:absolute; top:0; right:-20%; width:80%; height:40%; background: linear-gradient(90deg, rgba(14,165,233,.18), rgba(3,105,161,.12)); transform:skewY(-6deg); border-bottom-left-radius:36px; }
+
     .glass { @apply bg-white/70 backdrop-blur-xl shadow-xl ring-1 ring-slate-200/60; }
     .btn { @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5 font-semibold transition; }
     .btn-primary { @apply bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800; }
     .btn-dark { @apply bg-slate-900 text-white hover:bg-slate-800; }
     .chip { @apply text-xs px-2 py-0.5 rounded-full; }
     .navtab { @apply px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition; }
-    .navtab-active { @apply bg-brand-600 text-white shadow; }
+    .navtab-active { @apply bg-brand-700 text-white shadow; }
     .navtab-inactive { @apply bg-white/70 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200; }
+    .skeleton { @apply animate-pulse rounded-xl bg-slate-200/70; }
   </style>
 </head>
 <body class="min-h-screen text-slate-900">
+  <div class="bg-thirds"><div class="bg-top"></div><div class="bg-mid"></div><div class="bg-bot"></div></div>
+  <div class="bg-stripe"></div>
   <!-- Header -->
   <header class="max-w-7xl mx-auto px-6 pt-6">
     <div class="flex items-center justify-between">
@@ -68,14 +70,14 @@
   </header>
 
   <!-- Hero / Auth Card -->
-  <section id="authSection" class="max-w-3xl mx-auto px-6 mt-10">
+  <section id="authSection" class="max-w-3xl mx-auto px-6 mt-10 animate-fadeUp">
     <div class="glass rounded-3xl p-8 sm:p-10">
-      <h2 class="text-3xl sm:text-4xl font-extrabold text-center text-brand-800">Cal Coast Refrigeration Customer Portal</h2>
+      <h2 class="text-4xl sm:text-5xl font-extrabold text-center text-brand-800">Cal Coast Refrigeration Customer Portal</h2>
       <p class="text-center text-slate-600 mt-2">Please sign in below</p>
 
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a id="linkSignIn" href="#" class="btn btn-primary w-full sm:w-auto">Sign in</a>
-        <a id="linkCreate" href="#" class="btn btn-dark w-full sm:w-auto">Create account</a>
+        <button id="linkSignIn" class="btn btn-primary w-full sm:w-auto">Sign in</button>
+        <button id="linkCreate" class="btn btn-dark w-full sm:w-auto">Create account</button>
       </div>
 
       <div class="mt-4 text-center text-xs text-slate-500">
@@ -85,9 +87,9 @@
   </section>
 
   <!-- App Shell -->
-  <section id="appSection" class="hidden max-w-7xl mx-auto px-6 mt-10 mb-16">
+  <section id="appSection" class="hidden max-w-7xl mx-auto px-6 mt-10 mb-16 animate-fade">
     <!-- Tabs -->
-    <div class="flex flex-wrap gap-2 mb-5">
+    <div class="flex flex-wrap gap-2 mb-6">
       <button data-tab="openJobs" class="navtab navtab-active">Open Jobs</button>
       <button data-tab="pastJobs" class="navtab navtab-inactive">Past Jobs</button>
       <button data-tab="createCall" class="navtab navtab-inactive">Create Service Call</button>
@@ -97,7 +99,7 @@
     <!-- Panels -->
     <div id="panel-openJobs" class="glass rounded-2xl p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h3 class="text-xl font-semibold">Open Jobs</h3>
+        <h3 class="text-2xl font-bold text-brand-800">Open Jobs</h3>
         <div class="flex gap-2">
           <input id="filterSearch" type="text" placeholder="Search jobs…" class="border rounded-xl px-3 py-2 w-56" />
           <select id="filterStatus" class="border rounded-xl px-3 py-2">
@@ -113,16 +115,21 @@
     </div>
 
     <div id="panel-pastJobs" class="glass rounded-2xl p-6 hidden">
-      <h3 class="text-xl font-semibold mb-4">Past Jobs</h3>
+      <h3 class="text-2xl font-bold text-brand-800 mb-4">Past Jobs</h3>
       <div id="pastJobsList" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
     </div>
 
     <div id="panel-createCall" class="glass rounded-2xl p-6 hidden">
-      <h3 class="text-xl font-semibold mb-4">Create Service Call</h3>
+      <h3 class="text-2xl font-bold text-brand-800 mb-4">Create Service Call</h3>
       <form id="serviceCallForm" class="grid gap-4 max-w-2xl">
         <div>
           <label class="block text-sm mb-1">Site / Location</label>
           <input name="site" class="w-full border rounded-xl px-3 py-2" placeholder="e.g., Store #12 - 123 Main St" required />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Select Asset(s)</label>
+          <select id="assetSelect" name="assetIds" multiple class="w-full border rounded-xl px-3 py-2 h-36"></select>
+          <p class="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple.</p>
         </div>
         <div>
           <label class="block text-sm mb-1">Issue Description</label>
@@ -150,7 +157,7 @@
 
     <div id="panel-assets" class="glass rounded-2xl p-6 hidden">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-semibold">Asset Management</h3>
+        <h3 class="text-2xl font-bold text-brand-800">Asset Management</h3>
         <button id="btnRefreshAssets" class="btn navtab-inactive">Refresh</button>
       </div>
       <div id="assetSummary" class="mb-3 text-slate-700 text-sm"></div>
@@ -202,8 +209,7 @@
     const ADMIN = { user: "EthenPorcho", pass: "Pandamanda1!" };
 
     // ====== MSAL ======
-    const msalLoaded = typeof msal !== 'undefined';
-    const msalInstance = msalLoaded ? new msal.PublicClientApplication({
+    const msalInstance = new msal.PublicClientApplication({
       auth: {
         clientId: CONFIG.auth.clientId,
         authority: CONFIG.auth.authority,
@@ -211,218 +217,57 @@
         redirectUri: CONFIG.auth.redirectUri,
       },
       cache: CONFIG.auth.cache,
-    }) : null;
+    });
 
-    function getActiveAccount() {
-      if (!msalInstance) return null;
-      const accounts = msalInstance.getAllAccounts();
-      return accounts[0] || null;
-    }
+    function getActiveAccount() { const accounts = msalInstance.getAllAccounts(); return accounts[0] || null; }
 
-    async function signIn() {
-      if (!msalInstance) return;
-      try {
-        const loginResponse = await msalInstance.loginPopup({ scopes: CONFIG.auth.scopes });
-        localStorage.setItem("ccr_portal_logged_in", "true");
-        renderAuthState();
-        await loadAllData();
-      } catch (e) { console.error(e); alert("Sign-in failed."); }
-    }
+    async function signIn() { try { await msalInstance.loginPopup({ scopes: CONFIG.auth.scopes }); localStorage.setItem("ccr_portal_logged_in","true"); renderAuthState(); await loadAllData(); } catch(e){ console.error(e); alert("Sign-in failed."); } }
     async function createAccount() { await signIn(); }
-    async function signOut() {
-      try {
-        localStorage.removeItem("ccr_portal_logged_in");
-        localStorage.removeItem("ccr_admin_override");
-        if (msalInstance) await msalInstance.logoutPopup();
-      } catch (e) { console.error(e); }
-    }
+    async function signOut(){ try { localStorage.removeItem("ccr_portal_logged_in"); localStorage.removeItem("ccr_admin_override"); await msalInstance.logoutPopup(); } catch(e){ console.error(e);} }
 
-    async function getToken() {
-      const override = localStorage.getItem("ccr_admin_override") === "true";
-      if (override) return null; // bypass token on override (API must allow anonymous or demo data)
-      const account = getActiveAccount();
-      if (!account) throw new Error("No active account");
-      try {
-        const result = await msalInstance.acquireTokenSilent({ account, scopes: CONFIG.auth.scopes });
-        return result.accessToken;
-      } catch (e) {
-        const result = await msalInstance.acquireTokenPopup({ scopes: CONFIG.auth.scopes });
-        return result.accessToken;
-      }
-    }
+    async function getToken(){ const override = localStorage.getItem("ccr_admin_override") === "true"; if(override) return null; const account = getActiveAccount(); if(!account) throw new Error("No active account"); try{ const r = await msalInstance.acquireTokenSilent({account, scopes: CONFIG.auth.scopes}); return r.accessToken; } catch(e){ const r = await msalInstance.acquireTokenPopup({scopes: CONFIG.auth.scopes}); return r.accessToken; } }
 
     // ====== API helpers ======
-    async function apiGet(path, params = {}) {
-      const qs = new URLSearchParams(params).toString();
-      const override = localStorage.getItem("ccr_admin_override") === "true";
-      const headers = {};
-      if (!override) {
-        const token = await getToken();
-        headers.Authorization = `Bearer ${token}`;
-      }
-      const res = await fetch(`${CONFIG.apiBase}${path}${qs ? `?${qs}` : ''}`, { headers });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    }
-    async function apiPost(path, body) {
-      const override = localStorage.getItem("ccr_admin_override") === "true";
-      const headers = { 'Content-Type': 'application/json' };
-      if (!override) {
-        const token = await getToken();
-        headers.Authorization = `Bearer ${token}`;
-      }
-      const res = await fetch(`${CONFIG.apiBase}${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    }
+    async function apiGet(path, params={}){ const qs = new URLSearchParams(params).toString(); const override = localStorage.getItem("ccr_admin_override") === "true"; const headers = {}; if(!override){ const token = await getToken(); headers.Authorization = `Bearer ${token}`; } const res = await fetch(`${CONFIG.apiBase}${path}${qs?`?${qs}`:''}`, { headers }); if(!res.ok) throw new Error(await res.text()); return res.json(); }
+    async function apiPost(path, body){ const override = localStorage.getItem("ccr_admin_override") === "true"; const headers = { 'Content-Type':'application/json' }; if(!override){ const token = await getToken(); headers.Authorization = `Bearer ${token}`; } const res = await fetch(`${CONFIG.apiBase}${path}`, { method:'POST', headers, body: JSON.stringify(body) }); if(!res.ok) throw new Error(await res.text()); return res.json(); }
 
     // ====== UI helpers ======
-    function renderAuthState() {
-      const loggedIn = localStorage.getItem("ccr_admin_override") === "true" || (!!getActiveAccount()) || localStorage.getItem("ccr_portal_logged_in") === "true";
-      document.getElementById('authSection').classList.toggle('hidden', loggedIn);
-      document.getElementById('appSection').classList.toggle('hidden', !loggedIn);
+    function renderAuthState(){ const loggedIn = localStorage.getItem("ccr_admin_override")==="true" || (!!getActiveAccount()) || localStorage.getItem("ccr_portal_logged_in")==="true"; document.getElementById('authSection').classList.toggle('hidden', loggedIn); document.getElementById('appSection').classList.toggle('hidden', !loggedIn); document.getElementById('btnSignIn').classList.toggle('hidden', loggedIn); document.getElementById('btnSignOut').classList.toggle('hidden', !loggedIn); const userName = document.getElementById('userName'); if(loggedIn){ const acct = getActiveAccount(); userName.textContent = acct ? (acct.name || acct.username) : (localStorage.getItem('ccr_admin_override')==='true' ? 'Admin Override' : ''); userName.classList.remove('hidden'); } else { userName.classList.add('hidden'); } }
 
-      document.getElementById('btnSignIn').classList.toggle('hidden', loggedIn);
-      document.getElementById('btnSignOut').classList.toggle('hidden', !loggedIn);
+    function switchTab(name){ document.querySelectorAll('[data-tab]').forEach(btn=>{ const active = btn.getAttribute('data-tab')===name; btn.classList.toggle('navtab-active', active); btn.classList.toggle('navtab-inactive', !active); }); document.querySelectorAll('[id^="panel-"]').forEach(p=>p.classList.add('hidden')); const panel = document.getElementById(`panel-${name}`); panel.classList.remove('hidden'); panel.classList.add('animate-fade'); setTimeout(()=>panel.classList.remove('animate-fade'), 400); }
 
-      const userName = document.getElementById('userName');
-      if (loggedIn) {
-        const acct = getActiveAccount();
-        userName.textContent = acct ? (acct.name || acct.username) : (localStorage.getItem("ccr_admin_override") === 'true' ? 'Admin Override' : '');
-        userName.classList.remove('hidden');
-      } else {
-        userName.classList.add('hidden');
-      }
-    }
-
-    function switchTab(name) {
-      document.querySelectorAll('[data-tab]').forEach(btn => {
-        const active = btn.getAttribute('data-tab') === name;
-        btn.classList.toggle('navtab-active', active);
-        btn.classList.toggle('navtab-inactive', !active);
-      });
-      document.querySelectorAll('[id^="panel-"]').forEach(p => p.classList.add('hidden'));
-      document.getElementById(`panel-${name}`).classList.remove('hidden');
-    }
-
-    function badge(status) {
-      const map = {
-        'New': 'bg-slate-100 text-slate-700',
-        'Scheduled': 'bg-brand-100 text-brand-700',
-        'In Progress': 'bg-amber-100 text-amber-700',
-        'On Hold': 'bg-rose-100 text-rose-700',
-        'Done': 'bg-emerald-100 text-emerald-700'
-      };
-      return map[status] || 'bg-slate-100 text-slate-700';
-    }
-
-    function jobCard(job) {
-      return `
-        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 p-4">
-          <div class="flex items-center justify-between mb-1">
-            <div class="font-semibold">${job.JobNumber || job.JobID}</div>
-            <span class="chip ${badge(job.Status)}">${job.Status}</span>
-          </div>
-          <div class="text-sm text-slate-700">${job.SiteName || ''}</div>
-          <div class="text-sm text-slate-500 line-clamp-2">${job.ProblemDesc || ''}</div>
-          <div class="text-xs text-slate-400 mt-2">Scheduled: ${fmtDate(job.ScheduledStart)}</div>
-        </div>`;
-    }
-
-    function assetCard(a) {
-      return `
-        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 p-4">
-          <div class="flex items-center justify-between mb-1">
-            <div class="font-semibold">${a.Tag || a.Model}</div>
-            <div class="text-xs text-slate-500">${a.Make || ''} ${a.Model || ''}</div>
-          </div>
-          <div class="text-sm text-slate-600">Serial: ${a.Serial || '-'}</div>
-          <div class="text-sm text-slate-600">Site: ${a.SiteName || '-'}</div>
-          <div class="text-sm text-slate-600">Lifetime Spend: $${Number(a.LifetimeSpend || 0).toFixed(2)}</div>
-        </div>`;
-    }
-
-    function fmtDate(d) { try { return d ? new Date(d).toLocaleString() : '-'; } catch { return d || '-'; } }
+    function badge(status){ const map = { 'New':'bg-slate-100 text-slate-700', 'Scheduled':'bg-brand-100 text-brand-700', 'In Progress':'bg-amber-100 text-amber-700', 'On Hold':'bg-rose-100 text-rose-700', 'Done':'bg-emerald-100 text-emerald-700' }; return map[status] || 'bg-slate-100 text-slate-700'; }
+    function jobCard(job){ return `<div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 p-4"><div class="flex items-center justify-between mb-1"><div class="font-semibold">${job.JobNumber||job.JobID}</div><span class="chip ${badge(job.Status)}">${job.Status}</span></div><div class="text-sm text-slate-700">${job.SiteName||''}</div><div class="text-sm text-slate-500 line-clamp-2">${job.ProblemDesc||''}</div><div class="text-xs text-slate-400 mt-2">Scheduled: ${fmtDate(job.ScheduledStart)}</div></div>`; }
+    function assetCard(a){ return `<div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 p-4"><div class="flex items-center justify-between mb-1"><div class="font-semibold">${a.Tag||a.Model}</div><div class="text-xs text-slate-500">${a.Make||''} ${a.Model||''}</div></div><div class="text-sm text-slate-600">Serial: ${a.Serial||'-'}</div><div class="text-sm text-slate-600">Site: ${a.SiteName||'-'}</div><div class="text-sm text-slate-600">Lifetime Spend: $${Number(a.LifetimeSpend||0).toFixed(2)}</div></div>`; }
+    function fmtDate(d){ try{ return d ? new Date(d).toLocaleString() : '-'; } catch { return d||'-'; } }
 
     // ====== Data loaders ======
-    async function loadOpenJobs() {
-      const list = document.getElementById('openJobsList');
-      list.innerHTML = '<div class="text-sm text-slate-500">Loading…</div>';
-      try {
-        const search = document.getElementById('filterSearch').value;
-        const status = document.getElementById('filterStatus').value;
-        const data = await apiGet('/jobs', { scope: 'open', q: search, status });
-        list.innerHTML = data.map(jobCard).join('') || '<div class="text-sm text-slate-500">No open jobs found.</div>';
-      } catch (e) { console.error(e); list.innerHTML = '<div class="text-sm text-red-600">Failed to load jobs.</div>'; }
-    }
-    async function loadPastJobs() {
-      const list = document.getElementById('pastJobsList');
-      list.innerHTML = '<div class="text-sm text-slate-500">Loading…</div>';
-      try {
-        const data = await apiGet('/jobs', { scope: 'past' });
-        list.innerHTML = data.map(jobCard).join('') || '<div class="text-sm text-slate-500">No past jobs found.</div>';
-      } catch (e) { console.error(e); list.innerHTML = '<div class="text-sm text-red-600">Failed to load past jobs.</div>'; }
-    }
-    async function loadAssets() {
-      const list = document.getElementById('assetsList');
-      list.innerHTML = '<div class="text-sm text-slate-500">Loading…</div>';
-      try {
-        const summary = await apiGet('/assets/summary');
-        document.getElementById('assetSummary').textContent = `Total assets: ${summary.totalAssets || 0} • Lifetime spend: $${Number(summary.totalSpend || 0).toFixed(2)}`;
-        const data = await apiGet('/assets');
-        list.innerHTML = data.map(assetCard).join('') || '<div class="text-sm text-slate-500">No assets found.</div>';
-      } catch (e) { console.error(e); list.innerHTML = '<div class="text-sm text-red-600">Failed to load assets.</div>'; }
-    }
-    async function submitServiceCall(e) {
-      e.preventDefault();
-      const form = e.target;
-      const payload = { site: form.site.value.trim(), description: form.description.value.trim(), priority: form.priority.value, phone: form.phone.value.trim() };
-      try { await apiPost('/service-calls', payload); document.getElementById('submitMsg').classList.remove('hidden'); form.reset(); setTimeout(()=>document.getElementById('submitMsg').classList.add('hidden'), 3000); }
-      catch (e) { console.error(e); alert('Failed to submit.'); }
-    }
-    async function loadAllData() { await Promise.all([loadOpenJobs(), loadPastJobs(), loadAssets()]); }
+    function renderSkeletonCards(el,n=6){ el.innerHTML = Array.from({length:n}).map(()=>'<div class="skeleton h-28"></div>').join(''); }
+    async function loadOpenJobs(){ const list=document.getElementById('openJobsList'); renderSkeletonCards(list,6); try{ const search=document.getElementById('filterSearch').value; const status=document.getElementById('filterStatus').value; const data=await apiGet('/jobs',{scope:'open',q:search,status}); list.innerHTML=data.map(jobCard).join('')||'<div class="text-sm text-slate-500">No open jobs found.</div>'; }catch(e){ console.error(e); list.innerHTML='<div class="text-sm text-red-600">Failed to load jobs.</div>'; } }
+    async function loadPastJobs(){ const list=document.getElementById('pastJobsList'); renderSkeletonCards(list,6); try{ const data=await apiGet('/jobs',{scope:'past'}); list.innerHTML=data.map(jobCard).join('')||'<div class="text-sm text-slate-500">No past jobs found.</div>'; }catch(e){ console.error(e); list.innerHTML='<div class="text-sm text-red-600">Failed to load past jobs.</div>'; } }
+    async function loadAssets(){ const list=document.getElementById('assetsList'); renderSkeletonCards(list,6); try{ const summary=await apiGet('/assets/summary'); document.getElementById('assetSummary').textContent=`Total assets: ${summary.totalAssets||0} • Lifetime spend: $${Number(summary.totalSpend||0).toFixed(2)}`; const data=await apiGet('/assets'); const sel=document.getElementById('assetSelect'); if(sel) sel.innerHTML=data.map(a=>`<option value="${a.EquipmentID}">${a.Tag||a.Model} — ${a.SiteName||''}</option>`).join(''); list.innerHTML=data.map(assetCard).join('')||'<div class="text-sm text-slate-500">No assets found.</div>'; }catch(e){ console.error(e); list.innerHTML='<div class="text-sm text-red-600">Failed to load assets.</div>'; } }
+    async function submitServiceCall(e){ e.preventDefault(); const form=e.target; const sel=document.getElementById('assetSelect'); const assetIds=sel?Array.from(sel.selectedOptions).map(o=>o.value):[]; const payload={ site:form.site.value.trim(), assetIds, description:form.description.value.trim(), priority:form.priority.value, phone:form.phone.value.trim() }; try{ await apiPost('/service-calls', payload); document.getElementById('submitMsg').classList.remove('hidden'); form.reset(); setTimeout(()=>document.getElementById('submitMsg').classList.add('hidden'), 3000); }catch(e){ console.error(e); alert('Failed to submit.'); } }
+    async function loadAllData(){ await Promise.all([loadOpenJobs(), loadPastJobs(), loadAssets()]); }
 
     // ====== Events ======
     document.getElementById('year').textContent = new Date().getFullYear();
     document.getElementById('filterSearch').addEventListener('input', loadOpenJobs);
     document.getElementById('filterStatus').addEventListener('change', loadOpenJobs);
     document.getElementById('serviceCallForm').addEventListener('submit', submitServiceCall);
-    document.querySelectorAll('[data-tab]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab'))));
-
-    document.getElementById('linkSignIn').addEventListener('click', (e) => { e.preventDefault(); signIn(); });
-    document.getElementById('linkCreate').addEventListener('click', (e) => { e.preventDefault(); createAccount(); });
+    document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.getAttribute('data-tab'))));
+    document.getElementById('linkSignIn').addEventListener('click',(e)=>{ e.preventDefault(); signIn(); });
+    document.getElementById('linkCreate').addEventListener('click',(e)=>{ e.preventDefault(); createAccount(); });
     document.getElementById('btnSignIn').addEventListener('click', signIn);
     document.getElementById('btnSignOut').addEventListener('click', signOut);
 
     // Admin override modal
-    const modal = document.getElementById('adminModal');
-    document.getElementById('adminOverrideOpen').addEventListener('click', () => modal.classList.remove('hidden'));
-    document.getElementById('adminCancel').addEventListener('click', () => modal.classList.add('hidden'));
-    document.getElementById('adminForm').addEventListener('submit', (e)=>{
-      e.preventDefault();
-      const u = document.getElementById('adminUser').value.trim();
-      const p = document.getElementById('adminPass').value;
-      if (u === ADMIN.user && p === ADMIN.pass) {
-        localStorage.setItem('ccr_admin_override','true');
-        modal.classList.add('hidden');
-        renderAuthState();
-        loadAllData();
-      } else {
-        document.getElementById('adminError').classList.remove('hidden');
-      }
-    });
+    const modal=document.getElementById('adminModal');
+    document.getElementById('adminOverrideOpen').addEventListener('click',()=>modal.classList.remove('hidden'));
+    document.getElementById('adminCancel').addEventListener('click',()=>modal.classList.add('hidden'));
+    document.getElementById('adminForm').addEventListener('submit',(e)=>{ e.preventDefault(); const u=document.getElementById('adminUser').value.trim(); const p=document.getElementById('adminPass').value; if(u==='EthenPorcho'&&p==='Pandamanda1!'){ localStorage.setItem('ccr_admin_override','true'); modal.classList.add('hidden'); renderAuthState(); loadAllData(); } else { document.getElementById('adminError').classList.remove('hidden'); } });
 
     // Initial auth/UI state
-    (async () => {
-      try { if (msalInstance) await msalInstance.handleRedirectPromise(); } catch {}
-      renderAuthState();
-      if (getActiveAccount() || localStorage.getItem('ccr_admin_override')==='true') loadAllData();
-    })();
-  </script>
-  <!-- MSAL (deferred load for better FCP) -->
-  <script defer src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js" integrity="sha384-TBYk1qP5I9M9YqXg0hZ0E2WxbQZ6b1ySAGc7bX0C7n0H+u7jR0kR9cGm1o8rU4sJ" crossorigin="anonymous"></script>
-</body>
-</html>
+    (async()=>{ try{ await msalInstance.handleRedirectPromise(); }catch{} renderAuthState(); if(getActiveAccount() || localStorage.getItem('ccr_admin_override')==='true') loadAllData(); })();
   </script>
 </body>
 </html>
