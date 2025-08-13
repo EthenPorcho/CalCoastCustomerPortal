@@ -16,61 +16,59 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',300:'#7dd3fc',400:'#38bdf8',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',800:'#075985',900:'#0c4a6e' }
+            brand: { 50:'#eef7ff',100:'#d9efff',200:'#b7e2ff',300:'#91d4ff',400:'#58bfff',500:'#199eff',600:'#097fda',700:'#0665ae',800:'#0a4d85',900:'#0d3e69' },
+            ink: '#0f172a'
           },
           keyframes: {
             fadeUp: { '0%': {opacity:0, transform:'translateY(12px)'}, '100%': {opacity:1, transform:'translateY(0)'} },
             fade: { '0%': {opacity:0}, '100%': {opacity:1} },
             shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } }
           },
-          animation: { fadeUp: 'fadeUp .5s ease-out both', fade: 'fade .4s ease-out both', shimmer: 'shimmer 1.8s linear infinite' }
+          animation: { fadeUp: 'fadeUp .5s ease-out both', fade: 'fade .4s ease-out both', shimmer: 'shimmer 1.8s linear infinite' },
+          boxShadow: { elevate: '0 10px 25px -8px rgba(2, 132, 199, .25)' }
         }
       }
     }
   </script>
   <style>
-    /* Rule-of-thirds background blocks */
-    body { position: relative; }
-    .bg-thirds { position: fixed; inset: 0; z-index: -2; display: grid; grid-template-rows: 33% 34% 33%; }
-    .bg-top { background: linear-gradient(180deg, #e6f3fb, #f6fbff); }
-    .bg-mid { background: white; }
-    .bg-bot { background: linear-gradient(180deg, #ffffff, #eef6fb); }
-    .bg-stripe { position: fixed; inset: 0; z-index: -1; pointer-events:none; }
-    .bg-stripe::before { content:''; position:absolute; top:0; right:-20%; width:80%; height:40%; background: linear-gradient(90deg, rgba(14,165,233,.18), rgba(3,105,161,.12)); transform:skewY(-6deg); border-bottom-left-radius:36px; }
+    /* Clean split background (improved) */
+    body { position: relative; background: linear-gradient(180deg, #f7fbff 0%, #ffffff 45%, #f3f9ff 100%); }
+    .bg-accent { position: fixed; inset: 0; z-index: -1; pointer-events:none; }
+    .bg-accent::before { content:''; position:absolute; top:-10%; left:-8%; width:65%; height:55%; transform:skewY(-6deg); background: radial-gradient(900px 500px at 40% 20%, rgba(25,158,255,.20), transparent 65%), linear-gradient(120deg, rgba(25,158,255,.10), rgba(9,127,218,.06)); border-bottom-right-radius:48px; }
+    .bg-accent::after { content:''; position:absolute; bottom:-12%; right:-10%; width:70%; height:52%; transform:skewY(6deg); background: radial-gradient(900px 500px at 60% 70%, rgba(9,127,218,.14), transparent 70%), linear-gradient(120deg, rgba(13,62,105,.06), rgba(145,212,255,.08)); border-top-left-radius:48px; }
 
-    .glass { @apply bg-white/70 backdrop-blur-xl shadow-xl ring-1 ring-slate-200/60; }
+    .glass { @apply bg-white/80 backdrop-blur-xl shadow-elevate ring-1 ring-slate-200/70; }
     .btn { @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5 font-semibold transition; }
-    .btn-primary { @apply bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800; }
-    .btn-dark { @apply bg-slate-900 text-white hover:bg-slate-800; }
+    .btn-primary { @apply bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-elevate ring-1 ring-brand-700/30; }
+    .btn-dark { @apply bg-ink text-white hover:bg-slate-800; }
     .chip { @apply text-xs px-2 py-0.5 rounded-full; }
-    .navtab { @apply px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition; }
-    .navtab-active { @apply bg-brand-700 text-white shadow; }
-    .navtab-inactive { @apply bg-white/70 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200; }
+    /* NAV */
+    .navtab { @apply px-6 py-3 rounded-xl text-base font-semibold cursor-pointer transition; }
+    .navtab-active { @apply bg-brand-600 text-white shadow; }
+    .navtab-inactive { @apply bg-white/80 text-slate-700 hover:bg-slate-100 ring-1 ring-slate-200; }
+    .nav-divider { width:1px; height:28px; background: rgba(15,23,42,.15); }
+
     .skeleton { @apply animate-pulse rounded-xl bg-slate-200/70; }
-    .shimmer { background: linear-gradient(90deg, rgba(2,132,199,.08) 25%, rgba(14,165,233,.18) 37%, rgba(2,132,199,.08) 63%); background-size: 400% 100%; }
-    /* Sticky sub-nav */
+    .shimmer { background: linear-gradient(90deg, rgba(25,158,255,.08) 25%, rgba(25,158,255,.20) 37%, rgba(25,158,255,.08) 63%); background-size: 400% 100%; }
+
     .sticky-nav { position: sticky; top: 0; z-index: 30; backdrop-filter: saturate(160%) blur(6px); }
-    .sticky-shadow { box-shadow: 0 6px 16px -12px rgba(3,105,161,.35); }
-    /* Chip selector */
-    .chip-btn { @apply text-sm px-3 py-1.5 rounded-2xl bg-white/80 ring-1 ring-slate-200 hover:bg-brand-50 cursor-pointer transition; }
-    .chip-selected { @apply bg-brand-600 text-white ring-brand-600; }
+    .sticky-shadow { box-shadow: 0 10px 30px -15px rgba(9,127,218,.35); }
   </style>
 </head>
 <body class="min-h-screen text-slate-900">
-  <div class="bg-thirds"><div class="bg-top"></div><div class="bg-mid"></div><div class="bg-bot"></div></div>
-  <div class="bg-stripe"></div>
+  <div class="bg-accent"></div>
   <!-- Header -->
   <header class="max-w-7xl mx-auto px-6 pt-6">
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="./logo.png" alt="Cal Coast Refrigeration" class="h-12 w-auto drop-shadow" />
+      <div class="flex items-center gap-4">
+        <img src="./logo.png" alt="Cal Coast Refrigeration" class="h-20 w-auto drop-shadow" />
         <div class="leading-tight">
-          <h1 class="text-2xl sm:text-3xl font-bold text-brand-800">Cal Coast Refrigeration</h1>
+          <h1 class="text-3xl sm:text-4xl font-bold text-brand-800">Cal Coast Refrigeration</h1>
           <p class="text-sm text-slate-500">Customer Portal</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span id="userName" class="hidden text-sm text-slate-600"></span>
+      <div class="flex items-center gap-3">
+        <span id="userName" class="hidden text-sm text-slate-700"></span>
         <button id="btnSignIn" class="hidden btn navtab-inactive">Sign in</button>
         <button id="btnSignOut" class="hidden btn navtab-inactive">Sign out</button>
       </div>
@@ -101,20 +99,23 @@
 
   <!-- App Shell -->
   <section id="appSection" class="hidden max-w-7xl mx-auto px-6 mt-10 mb-16 animate-fade">
-    <!-- Sticky sub‑nav -->
-    <div id="stickyNav" class="sticky-nav glass rounded-2xl p-3 mb-6">
-      <div class="flex flex-wrap gap-2 items-center">
-        <button data-tab="openJobs" class="navtab navtab-active">Open Jobs</button>
-        <button data-tab="pastJobs" class="navtab navtab-inactive">Past Jobs</button>
-        <button data-tab="createCall" class="navtab navtab-inactive">Create Service Call</button>
-        <button data-tab="assets" class="navtab navtab-inactive">Asset Management</button>
+    <!-- Sticky sub‑nav sized to ~2/3 width with dividers -->
+    <div id="stickyNav" class="sticky-nav glass rounded-2xl p-3 mb-6 max-w-4xl mx-auto">
+      <div class="flex items-center justify-between gap-2">
+        <button data-tab="openJobs" class="navtab navtab-active flex-1">Open Jobs</button>
+        <div class="nav-divider"></div>
+        <button data-tab="pastJobs" class="navtab navtab-inactive flex-1">Past Jobs</button>
+        <div class="nav-divider"></div>
+        <button data-tab="createCall" class="navtab navtab-inactive flex-1">Create Service Call</button>
+        <div class="nav-divider"></div>
+        <button data-tab="assets" class="navtab navtab-inactive flex-1">Asset Management</button>
       </div>
     </div>
 
     <!-- Panels -->
     <div id="panel-openJobs" class="glass rounded-2xl p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h3 class="text-2xl font-bold text-brand-800">Open Jobs</h3>
+        <h3 class="text-3xl font-extrabold text-brand-800">Open Jobs</h3>
         <div class="flex gap-2">
           <input id="filterSearch" type="text" placeholder="Search jobs…" class="border rounded-xl px-3 py-2 w-56" />
           <select id="filterStatus" class="border rounded-xl px-3 py-2">
@@ -130,12 +131,12 @@
     </div>
 
     <div id="panel-pastJobs" class="glass rounded-2xl p-6 hidden">
-      <h3 class="text-2xl font-bold text-brand-800 mb-4">Past Jobs</h3>
+      <h3 class="text-3xl font-extrabold text-brand-800 mb-4">Past Jobs</h3>
       <div id="pastJobsList" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
     </div>
 
     <div id="panel-createCall" class="glass rounded-2xl p-6 hidden">
-      <h3 class="text-2xl font-bold text-brand-800 mb-4">Create Service Call</h3>
+      <h3 class="text-3xl font-extrabold text-brand-800 mb-4">Create Service Call</h3>
       <form id="serviceCallForm" class="grid gap-4 max-w-2xl">
         <div>
           <label class="block text-sm mb-1">Site / Location</label>
@@ -143,9 +144,9 @@
         </div>
         <div>
           <label class="block text-sm mb-1">Select Asset(s)</label>
-          <!-- Chip selector -->
-          <div id="assetChips" class="flex flex-wrap gap-2"></div>
-          <p class="text-xs text-slate-500 mt-1">Click to select. Click again to remove.</p>
+          <!-- Dropdown (multi-select) -->
+          <select id="assetSelect" name="assetIds" multiple class="w-full border rounded-xl px-3 py-2 h-40"></select>
+          <p class="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple.</p>
         </div>
         <div>
           <label class="block text-sm mb-1">Issue Description</label>
@@ -166,14 +167,14 @@
             <input name="phone" class="w-full border rounded-xl px-3 py-2" placeholder="(555) 123‑4567" required />
           </div>
         </div>
-        <button class="btn btn-primary w-max">Submit Request</button>
+        <button type="submit" class="btn btn-primary w-max">Submit Request</button>
         <p id="submitMsg" class="text-sm text-green-700 hidden">Submitted!</p>
       </form>
     </div>
 
     <div id="panel-assets" class="glass rounded-2xl p-6 hidden">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-2xl font-bold text-brand-800">Asset Management</h3>
+        <h3 class="text-3xl font-extrabold text-brand-800">Asset Management</h3>
         <button id="btnRefreshAssets" class="btn navtab-inactive">Refresh</button>
       </div>
       <div id="assetSummary" class="mb-3 text-slate-700 text-sm"></div>
@@ -264,31 +265,12 @@
       stickyNav?.classList.toggle('sticky-shadow', sc > 6);
     });
 
-    // ====== Chip selector state ======
-    let assetsCache = [];
-    const selectedAssets = new Set();
-    function renderAssetChips() {
-      const host = document.getElementById('assetChips');
-      if (!host) return;
-      host.innerHTML = assetsCache.map(a=>{
-        const active = selectedAssets.has(a.EquipmentID);
-        return `<button type="button" data-id="${a.EquipmentID}" class="chip-btn ${active ? 'chip-selected' : ''}">${(a.Tag||a.Model)}${a.SiteName?` · ${a.SiteName}`:''}</button>`;
-      }).join('');
-      host.querySelectorAll('button[data-id]')?.forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const id = btn.getAttribute('data-id');
-          if (selectedAssets.has(id)) { selectedAssets.delete(id); btn.classList.remove('chip-selected'); }
-          else { selectedAssets.add(id); btn.classList.add('chip-selected'); }
-        });
-      });
-    }
-
     // ====== Data loaders ======
     function renderSkeletonCards(el,n=6){ el.innerHTML = Array.from({length:n}).map(()=>'<div class="skeleton h-28"></div>').join(''); }
     async function loadOpenJobs(){ const list=document.getElementById('openJobsList'); renderSkeletonCards(list,6); try{ const search=document.getElementById('filterSearch').value; const status=document.getElementById('filterStatus').value; const data=await apiGet('/jobs',{scope:'open',q:search,status}); list.innerHTML=data.map(jobCard).join('')||'<div class="text-sm text-slate-500">No open jobs found.</div>'; }catch(e){ console.error(e); list.innerHTML='<div class="text-sm text-red-600">Failed to load jobs.</div>'; } }
     async function loadPastJobs(){ const list=document.getElementById('pastJobsList'); renderSkeletonCards(list,6); try{ const data=await apiGet('/jobs',{scope:'past'}); list.innerHTML=data.map(jobCard).join('')||'<div class="text-sm text-slate-500">No past jobs found.</div>'; }catch(e){ console.error(e); list.innerHTML='<div class="text-sm text-red-600">Failed to load past jobs.</div>'; } }
-    async function loadAssets(){ const list=document.getElementById('assetsList'); renderSkeletonCards(list,6); try{ const summary=await apiGet('/assets/summary'); document.getElementById('assetSummary').textContent=`Total assets: ${summary.totalAssets||0} • Lifetime spend: $${Number(summary.totalSpend||0).toFixed(2)}`; const data=await apiGet('/assets'); assetsCache = data; renderAssetChips(); list.innerHTML=data.map(assetCard).join('')||'<div class="text-sm text-slate-500">No assets found.</div>'; }catch(e){ console.error(e); list.innerHTML='<div class="text-sm text-red-600">Failed to load assets.</div>'; } }
-    async function submitServiceCall(e){ e.preventDefault(); const form=e.target; const assetIds=[...selectedAssets]; const payload={ site:form.site.value.trim(), assetIds, description:form.description.value.trim(), priority:form.priority.value, phone:form.phone.value.trim() }; try{ await apiPost('/service-calls', payload); document.getElementById('submitMsg').classList.remove('hidden'); form.reset(); selectedAssets.clear(); renderAssetChips(); setTimeout(()=>document.getElementById('submitMsg').classList.add('hidden'), 3000); }catch(e){ console.error(e); alert('Failed to submit.'); } }
+    async function loadAssets(){ const list=document.getElementById('assetsList'); renderSkeletonCards(list,6); try{ const summary=await apiGet('/assets/summary'); document.getElementById('assetSummary').textContent=`Total assets: ${summary.totalAssets||0} • Lifetime spend: $${Number(summary.totalSpend||0).toFixed(2)}`; const data=await apiGet('/assets'); const sel=document.getElementById('assetSelect'); if(sel){ sel.innerHTML = data.map(a=>`<option value="${a.EquipmentID}">${a.Tag||a.Model}${a.SiteName?` — ${a.SiteName}`:''}</option>`).join(''); } list.innerHTML=data.map(assetCard).join('')||'<div class="text-sm text-slate-500">No assets found.</div>'; }catch(e){ console.error(e); list.innerHTML='<div class="text-sm text-red-600">Failed to load assets.</div>'; } }
+    async function submitServiceCall(e){ e.preventDefault(); const form=e.target; const sel=document.getElementById('assetSelect'); const assetIds = sel ? Array.from(sel.selectedOptions).map(o=>o.value) : []; const payload={ site:form.site.value.trim(), assetIds, description:form.description.value.trim(), priority:form.priority.value, phone:form.phone.value.trim() }; try{ await apiPost('/service-calls', payload); document.getElementById('submitMsg').classList.remove('hidden'); form.reset(); if(sel) sel.selectedIndex = -1; setTimeout(()=>document.getElementById('submitMsg').classList.add('hidden'), 3000); }catch(e){ console.error(e); alert('Failed to submit.'); } }
     async function loadAllData(){ await Promise.all([loadOpenJobs(), loadPastJobs(), loadAssets()]); }
 
     // ====== Events ======
