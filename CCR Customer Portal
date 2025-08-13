@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cal Coast Refrigeration Customer Portal</title>
+  <!-- Tailwind CSS (CDN for quick start) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MSAL Browser (Azure AD B2C / Entra External ID) -->
+  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js" integrity="sha384-TBYk1qP5I9M9YqXg0hZ0E2WxbQZ6b1ySAGc7bX0C7n0H+u7jR0kR9cGm1o8rU4sJ" crossorigin="anonymous"></script>
+  <style>
+    .card { @apply bg-white/90 backdrop-blur rounded-2xl shadow p-6; }
+    .tab { @apply px-4 py-2 rounded-full text-sm font-medium cursor-pointer; }
+    .tab-active { @apply bg-blue-600 text-white; }
+    .tab-inactive { @apply bg-gray-100 text-gray-700 hover:bg-gray-200; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 text-slate-900">
+  <div class="max-w-6xl mx-auto p-6">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">❄️</span>
+        <h1 class="text-2xl font-semibold">Cal Coast Refrigeration</h1>
+      </div>
+      <div id="userControls" class="flex items-center gap-3">
+        <span id="userName" class="hidden text-sm text-slate-600"></span>
+        <button id="btnSignIn" class="hidden tab tab-inactive">Sign in</button>
+        <button id="btnSignOut" class="hidden tab tab-inactive">Sign out</button>
+      </div>
+    </header>
+
+    <!-- Hero / Auth card -->
+    <section id="authSection" class="card">
+      <h2 class="text-3xl font-bold mb-2 text-center">Cal Coast Refrigeration Customer Portal</h2>
+      <p class="text-center text-slate-600 mb-6">Please sign in below</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a id="linkSignIn" href="#" class="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">Sign in</a>
+        <a id="linkCreate" href="#" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-semibold hover:bg-slate-900">Create account</a>
+      </div>
+    </section>
+
+    <!-- App Shell -->
+    <section id="appSection" class="hidden">
+      <!-- Nav Tabs -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button data-tab="openJobs" class="tab tab-active">Open Jobs</button>
+        <button data-tab="pastJobs" class="tab tab-inactive">Past Jobs</button>
+        <button data-tab="createCall" class="tab tab-inactive">Create Service Call</button>
+        <button data-tab="assets" class="tab tab-inactive">Asset Management</button>
+      </div>
+
+      <!-- Panels -->
+      <div id="panel-openJobs" class="card">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold">Open Jobs</h3>
+          <div class="flex gap-2">
+            <input id="filterSearch" type="text" placeholder="Search jobs…" class="border rounded-lg px-3 py-2" />
+            <select id="filterStatus" class="border rounded-lg px-3 py-2">
+              <option value="">All Statuses</option>
+              <option>New</option>
+              <option>Scheduled</option>
+              <option>In Progress</option>
+              <option>On Hold</option>
+            </select>
+          </div>
+        </div>
+        <div id="openJobsList" class="grid md:grid-cols-2 gap-3"></div>
+      </div>
+
+      <div id="panel-pastJobs" class="card hidden">
+        <h3 class="text-xl font-semibold mb-4">Past Jobs</h3>
+        <div id="pastJobsList" class="grid md:grid-cols-2 gap-3"></div>
+      </div>
+
+      <div id="panel-createCall" class="card hidden">
+        <h3 class="text-xl font-semibold mb-4">Create Service Call</h3>
+        <form id="serviceCallForm" class="grid gap-3">
+          <div>
+            <label class="block text-sm mb-1">Site / Location</label>
+            <input name="site" class="w-full border rounded-lg px-3 py-2" placeholder="e.g., Store #12 - 123 Main St" required />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Issue Description</label>
+            <textarea name="description" class="w-full border rounded-lg px-3 py-2" rows="4" placeholder="Describe the problem" required></textarea>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm mb-1">Priority</label>
+              <select name="priority" class="w-full border rounded-lg px-3 py-2" required>
+                <option>Low</option>
+                <option>Normal</option>
+                <option>High</option>
+                <option>Emergency</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Contact Phone</label>
+              <input name="phone" class="w-full border rounded-lg px-3 py-2" placeholder="(555) 123‑4567" required />
+            </div>
+          </div>
+          <button class="justify-self-start px-5 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">Submit Request</button>
+          <p id="submitMsg" class="text-sm text-green-700 hidden">Submitted!</p>
+        </form>
+      </div>
+
+      <div id="panel-assets" class="card hidden">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xl font-semibold">Asset Management</h3>
+          <button id="btnRefreshAssets" class="tab tab-inactive">Refresh</button>
+        </div>
+        <div id="assetSummary" class="mb-3 text-slate-700 text-sm"></div>
+        <div id="assetsList" class="grid md:grid-cols-2 gap-3"></div>
+      </div>
+    </section>
+
+    <footer class="mt-8 text-center text-xs text-slate-500">© <span id="year"></span> Cal Coast Refrigeration</footer>
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    const CONFIG = {
+      // Replace with your Entra External ID (Azure AD B2C) or Entra ID app registration
+      auth: {
+        clientId: "YOUR_SPA_CLIENT_ID",
+        authority: "https://YOUR_TENANT.b2clogin.com/YOUR_TENANT.onmicrosoft.com/B2C_1_signupsignin", // or standard Entra authority
+        knownAuthorities: ["YOUR_TENANT.b2clogin.com"], // B2C only
+        redirectUri: window.location.origin + window.location.pathname,
+        cache: { cacheLocation: "localStorage", storeAuthStateInCookie: false },
+        scopes: ["api://YOUR_API_APP_ID/Portal.Read", "api://YOUR_API_APP_ID/Portal.Write"]
+      },
+      apiBase: "https://YOUR-FUNCTION-APP.azurewebsites.net/api" // Azure Functions base URL
+    };
+
+    // ====== AUTH (MSAL) ======
+    const msalInstance = new msal.PublicClientApplication({
+      auth: {
+        clientId: CONFIG.auth.clientId,
+        authority: CONFIG.auth.authority,
+        knownAuthorities: CONFIG.auth.knownAuthorities,
+        redirectUri: CONFIG.auth.redirectUri,
+      },
+      cache: CONFIG.auth.cache,
+    });
+
+    let account = null;
+
+    async function signIn() {
+      try {
+        const loginResponse = await msalInstance.loginPopup({ scopes: CONFIG.auth.scopes });
+        account = loginResponse.account;
+        localStorage.setItem("ccr_portal_logged_in", "true");
+        renderAuthState();
+        await loadAllData();
+      } catch (e) { console.error(e); alert("Sign-in failed."); }
+    }
+
+    async function createAccount() {
+      // In B2C: point to a sign-up specific user flow policy
+      await signIn();
+    }
+
+    async function signOut() {
+      try {
+        localStorage.removeItem("ccr_portal_logged_in");
+        await msalInstance.logoutPopup();
+      } catch (e) { console.error(e); }
+    }
+
+    function getActiveAccount() {
+      const accounts = msalInstance.getAllAccounts();
+      return accounts[0] || null;
+    }
+
+    async function getToken() {
+      account = getActiveAccount();
+      if (!account) throw new Error("No active account");
+      try {
+        const result = await msalInstance.acquireTokenSilent({
+          account,
+          scopes: CONFIG.auth.scopes,
+        });
+        return result.accessToken;
+      } catch (e) {
+        // fallback to popup
+        const result = await msalInstance.acquireTokenPopup({ scopes: CONFIG.auth.scopes });
+        return result.accessToken;
+      }
+    }
+
+    // ====== API HELPERS ======
+    async function apiGet(path, params = {}) {
+      const token = await getToken();
+      const qs = new URLSearchParams(params).toString();
+      const res = await fetch(`${CONFIG.apiBase}${path}${qs ? `?${qs}` : ''}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    async function apiPost(path, body) {
+      const token = await getToken();
+      const res = await fetch(`${CONFIG.apiBase}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    // ====== RENDERING ======
+    function renderAuthState() {
+      const loggedIn = !!getActiveAccount() || localStorage.getItem("ccr_portal_logged_in") === "true";
+      document.getElementById('authSection').classList.toggle('hidden', loggedIn);
+      document.getElementById('appSection').classList.toggle('hidden', !loggedIn);
+
+      document.getElementById('btnSignIn').classList.toggle('hidden', loggedIn);
+      document.getElementById('btnSignOut').classList.toggle('hidden', !loggedIn);
+      const userName = document.getElementById('userName');
+      if (loggedIn) {
+        const acct = getActiveAccount();
+        userName.textContent = acct ? (acct.name || acct.username) : "";
+        userName.classList.remove('hidden');
+      } else {
+        userName.classList.add('hidden');
+      }
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('[data-tab]').forEach(btn => {
+        const active = btn.getAttribute('data-tab') === name;
+        btn.classList.toggle('tab-active', active);
+        btn.classList.toggle('tab-inactive', !active);
+      });
+      document.querySelectorAll('[id^="panel-"]').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`panel-${name}`).classList.remove('hidden');
+    }
+
+    function jobCard(job) {
+      return `
+        <div class="border rounded-xl p-4 bg-white shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <div class="font-semibold">${job.JobNumber || job.JobID}</div>
+            <span class="text-xs px-2 py-0.5 rounded-full ${badgeColor(job.Status)}">${job.Status}</span>
+          </div>
+          <div class="text-sm text-slate-700">${job.SiteName || ''}</div>
+          <div class="text-sm text-slate-500">${job.ProblemDesc || ''}</div>
+          <div class="text-xs text-slate-400 mt-2">Scheduled: ${fmtDate(job.ScheduledStart)}</div>
+        </div>`;
+    }
+
+    function badgeColor(status) {
+      const map = {
+        'New': 'bg-gray-100 text-gray-700',
+        'Scheduled': 'bg-blue-100 text-blue-700',
+        'In Progress': 'bg-amber-100 text-amber-700',
+        'On Hold': 'bg-red-100 text-red-700',
+        'Done': 'bg-emerald-100 text-emerald-700'
+      };
+      return map[status] || 'bg-gray-100 text-gray-700';
+    }
+
+    function assetCard(a) {
+      return `
+        <div class="border rounded-xl p-4 bg-white shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <div class="font-semibold">${a.Tag || a.Model}</div>
+            <div class="text-xs text-slate-500">${a.Make || ''} ${a.Model || ''}</div>
+          </div>
+          <div class="text-sm text-slate-600">Serial: ${a.Serial || '-'}</div>
+          <div class="text-sm text-slate-600">Site: ${a.SiteName || '-'}</div>
+          <div class="text-sm text-slate-600">Lifetime Spend: $${Number(a.LifetimeSpend || 0).toFixed(2)}</div>
+        </div>`;
+    }
+
+    function fmtDate(d) {
+      if (!d) return '-';
+      try { return new Date(d).toLocaleString(); } catch { return d; }
+    }
+
+    // ====== DATA LOADERS ======
+    async function loadOpenJobs() {
+      const list = document.getElementById('openJobsList');
+      list.innerHTML = '<div class="text-sm text-slate-500">Loading…</div>';
+      try {
+        const search = document.getElementById('filterSearch').value;
+        const status = document.getElementById('filterStatus').value;
+        const data = await apiGet('/jobs', { scope: 'open', q: search, status });
+        list.innerHTML = data.map(jobCard).join('') || '<div class="text-sm text-slate-500">No open jobs found.</div>';
+      } catch (e) {
+        console.error(e); list.innerHTML = '<div class="text-sm text-red-600">Failed to load jobs.</div>';
+      }
+    }
+
+    async function loadPastJobs() {
+      const list = document.getElementById('pastJobsList');
+      list.innerHTML = '<div class="text-sm text-slate-500">Loading…</div>';
+      try {
+        const data = await apiGet('/jobs', { scope: 'past' });
+        list.innerHTML = data.map(jobCard).join('') || '<div class="text-sm text-slate-500">No past jobs found.</div>';
+      } catch (e) {
+        console.error(e); list.innerHTML = '<div class="text-sm text-red-600">Failed to load past jobs.</div>';
+      }
+    }
+
+    async function loadAssets() {
+      const list = document.getElementById('assetsList');
+      list.innerHTML = '<div class="text-sm text-slate-500">Loading…</div>';
+      try {
+        const summary = await apiGet('/assets/summary');
+        document.getElementById('assetSummary').textContent = `Total assets: ${summary.totalAssets || 0} • Lifetime spend: $${Number(summary.totalSpend || 0).toFixed(2)}`;
+        const data = await apiGet('/assets');
+        list.innerHTML = data.map(assetCard).join('') || '<div class="text-sm text-slate-500">No assets found.</div>';
+      } catch (e) {
+        console.error(e); list.innerHTML = '<div class="text-sm text-red-600">Failed to load assets.</div>';
+      }
+    }
+
+    async function submitServiceCall(e) {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        site: form.site.value.trim(),
+        description: form.description.value.trim(),
+        priority: form.priority.value,
+        phone: form.phone.value.trim()
+      };
+      try {
+        await apiPost('/service-calls', payload);
+        document.getElementById('submitMsg').classList.remove('hidden');
+        form.reset();
+        setTimeout(() => document.getElementById('submitMsg').classList.add('hidden'), 3000);
+      } catch (e) {
+        console.error(e); alert('Failed to submit.');
+      }
+    }
+
+    async function loadAllData() {
+      await Promise.all([loadOpenJobs(), loadPastJobs(), loadAssets()]);
+    }
+
+    // ====== EVENTS ======
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.getElementById('filterSearch').addEventListener('input', () => loadOpenJobs());
+    document.getElementById('filterStatus').addEventListener('change', () => loadOpenJobs());
+    document.getElementById('serviceCallForm').addEventListener('submit', submitServiceCall);
+
+    document.querySelectorAll('[data-tab]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab'))));
+
+    document.getElementById('linkSignIn').addEventListener('click', (e) => { e.preventDefault(); signIn(); });
+    document.getElementById('linkCreate').addEventListener('click', (e) => { e.preventDefault(); createAccount(); });
+    document.getElementById('btnSignIn').addEventListener('click', signIn);
+    document.getElementById('btnSignOut').addEventListener('click', signOut);
+
+    // Initial auth/UI state
+    msalInstance.handleRedirectPromise().then(() => {
+      renderAuthState();
+      if (getActiveAccount()) loadAllData();
+    });
+  </script>
+</body>
+</html>
